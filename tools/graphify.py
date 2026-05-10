@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+
+ROOT_MARKERS = ("pom.xml", ".git")
+JAVA_SRC = Path("src/main/java")
+
+
+@dataclass
+class JavaType:
+    package: str
+    name: str
+    kind: str
+    file_path: Path
+    annotations: list[str] = field(default_factory=list)
+    imports: list[str] = field(default_factory=list)
+    extends: str | None = None
+    mappings: list[str] = field(default_factory=list)
+
+    @property
+    def fqcn(self) -> str:
+        return f"{self.package}.{self.name}" if self.package else self.name
+
+
+PACKAGE_RE = re.compile(r"^\s*package\s+([\w.]+)\s*;")
+IMPORT_RE = re.compile(r"^\s*import\s+([\w.*]+)\s*;")
+ANNOTATION_RE = re.compile(r"^\s*@(\w+)")
+TYPE_RE = re.compile(
+    r"^\s*public\s+(class|interface|enum)\s+(\w+)(?:\s+extends\s+([\w.<>]+))?"
+)
+REQ_MAPPING_RE = re.compile(r'@RequestMapping\("([^"]+)"\)')
+HTTP_MAPPING_RE = re.compile(r'@(GetMapping|PostMapping|PutMapping|DeleteMapping)(?:\("([^"]*)"\))?')
+
+
+def detect_root(start: Path) -> Path:
+    cur = start.resolve()
+    while True:
+        if any((cur / marker).exists() for marker in ROOT_MARKERS):
+            return cur
+        if cur.parent == cur:
+            return start.resolve()
+        cur = cur.parent
+
+
+def parse_java_file(path: Path) -> JavaType | None:
+    package = ""
+    imports: list[str] = []
+    annotations: list[str] = []
+    mappings: list[str] = []
+    pending_annotations: list[str] = []
+    type_name = None
+    type_kind = None
+    extends = None
+    class_base_mapping = ""
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    type_line_idx = -1
+    for idx, line in enumerate(lines):
+        if not package:
+            pm = PACKAGE_RE.match(line)
+            if pm:
+                package = pm.group(1)
+
+        im = IMPORT_RE.match(line)
+        if im:
+            imports.append(im.group(1))
+
+        am = ANNOTATION_RE.match(line)
+        if am:
+            annotation = am.group(1)
+            pending_annotations.append(annotation)
+            rm = REQ_MAPPING_RE.search(line)
+            if rm:
+                class_base_mapping = rm.group(1)
+            hm = HTTP_MAPPING_RE.search(line)
+            if hm:
+                method, endpoint = hm.groups()
+                endpoint = endpoint or ""
+                prefix = class_base_mapping.rstrip("/")
+                suffix = endpoint if endpoint.startswith("/") else f"/{endpoint}" if endpoint else ""
+                mappings.append(f"{method.replace('Mapping', '').upper()} {prefix}{suffix}")
+            continue
+
+        tm = TYPE_RE.match(line)
+        if tm:
+            type_kind, type_name, extends = tm.groups()
+            annotations = pending_annotations[:]
+            type_line_idx = idx
+            pending_annotations.clear()
+            break
+
+        if line.strip():
+            pending_annotations.clear()
+
+    if not type_name or not type_kind:
+        return None
+
+    # Parse endpoint mappings after class declaration using the class-level base mapping.
+    if type_line_idx >= 0:
+        for line in lines[type_line_idx + 1 :]:
+            hm = HTTP_MAPPING_RE.search(line)
+            if hm:
+                method, endpoint = hm.groups()
+                endpoint = endpoint or ""
+                prefix = class_base_mapping.rstrip("/")
+                suffix = endpoint if endpoint.startswith("/") else f"/{endpoint}" if endpoint else ""
+                mappings.append(f"{method.replace('Mapping', '').upper()} {prefix}{suffix}")
+
+    return JavaType(
+        package=package,
+        name=type_name,
+        kind=type_kind,
+        file_path=path,
+        annotations=annotations,
+        imports=imports,
+        extends=extends,
+        mappings=mappings,
+    )
+
+
+def collect_types(root: Path) -> list[JavaType]:
+    source_root = root / JAVA_SRC
+    if not source_root.exists():
+        return []
+    types: list[JavaType] = []
+    for java_file in sorted(source_root.rglob("*.java")):
+        parsed = parse_java_file(java_file)
+        if parsed:
+            types.append(parsed)
+    return types
+
+
+def group_by_package(types: list[JavaType]) -> dict[str, list[JavaType]]:
+    grouped: dict[str, list[JavaType]] = {}
+    for t in types:
+        grouped.setdefault(t.package, []).append(t)
+    return dict(sorted(grouped.items(), key=lambda kv: kv[0]))
+
+
+def write_report(root: Path, types: list[JavaType]) -> None:
+    out = root / "graphify-out"
+    wiki = out / "wiki"
+    out.mkdir(parents=True, exist_ok=True)
+    wiki.mkdir(parents=True, exist_ok=True)
+
+    package_groups = group_by_package(types)
+    controllers = [t for t in types if "RestController" in t.annotations]
+    repositories = [t for t in types if t.kind == "interface" and (t.extends or "").startswith("JpaRepository")]
+    entities = [t for t in types if "Entity" in t.annotations]
+
+    lines: list[str] = []
+    lines.append("# Graph Report")
+    lines.append("")
+    lines.append("Generated by `tools/graphify.py` (AST-light static scan).")
+    lines.append("")
+    lines.append("## Project Summary")
+    lines.append(f"- Java types: {len(types)}")
+    lines.append(f"- Packages: {len(package_groups)}")
+    lines.append(f"- Entities: {len(entities)}")
+    lines.append(f"- Repositories: {len(repositories)}")
+    lines.append(f"- Controllers: {len(controllers)}")
+    lines.append("")
+
+    lines.append("## API Surface")
+    if not controllers:
+        lines.append("- No controllers found.")
+    for c in sorted(controllers, key=lambda x: x.fqcn):
+        rel = c.file_path.relative_to(root).as_posix()
+        lines.append(f"- `{c.fqcn}` (`{rel}`)")
+        if c.mappings:
+            for m in c.mappings:
+                lines.append(f"  - `{m}`")
+        else:
+            lines.append("  - no explicit endpoint annotations detected")
+    lines.append("")
+
+    lines.append("## Packages")
+    for pkg, pkg_types in package_groups.items():
+        lines.append(f"### `{pkg}`")
+        for t in sorted(pkg_types, key=lambda x: x.name):
+            rel = t.file_path.relative_to(root).as_posix()
+            ann = f" [{' ,'.join(t.annotations)}]" if t.annotations else ""
+            extends = f" extends `{t.extends}`" if t.extends else ""
+            lines.append(f"- `{t.kind} {t.name}`{extends}{ann} - `{rel}`")
+        lines.append("")
+
+    report_path = out / "GRAPH_REPORT.md"
+    report_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+
+    wiki_lines: list[str] = []
+    wiki_lines.append("# Graphify Wiki Index")
+    wiki_lines.append("")
+    wiki_lines.append("- [Graph Report](../GRAPH_REPORT.md)")
+    wiki_lines.append("")
+    wiki_lines.append("## Package Index")
+    for pkg, pkg_types in package_groups.items():
+        wiki_lines.append(f"- `{pkg}` ({len(pkg_types)} types)")
+    wiki_lines.append("")
+    (wiki / "index.md").write_text("\n".join(wiki_lines), encoding="utf-8")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate graphify output for repository.")
+    parser.add_argument("command", choices=["update"], help="Update graph artifacts")
+    parser.add_argument("target", nargs="?", default=".", help="Repository root or nested path")
+    args = parser.parse_args()
+
+    root = detect_root(Path(args.target))
+    types = collect_types(root)
+    write_report(root, types)
+    print(f"graphify: updated graph artifacts at {root / 'graphify-out'}")
+
+
+if __name__ == "__main__":
+    main()

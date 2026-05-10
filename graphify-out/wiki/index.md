@@ -1,0 +1,28 @@
+# Graphify Wiki Index
+
+- [Graph Report](../GRAPH_REPORT.md)
+
+## Package Index
+- `com.vitatrack` (1 types)
+- `com.vitatrack.auth` (2 types)
+- `com.vitatrack.auth.dto` (3 types)
+- `com.vitatrack.common` (1 types)
+- `com.vitatrack.exercise` (7 types)
+- `com.vitatrack.fitness` (5 types)
+- `com.vitatrack.fitness.dto` (2 types)
+- `com.vitatrack.food` (4 types)
+- `com.vitatrack.goal` (6 types)
+- `com.vitatrack.goal.dto` (3 types)
+- `com.vitatrack.health` (5 types)
+- `com.vitatrack.health.dto` (2 types)
+- `com.vitatrack.nutrition` (7 types)
+- `com.vitatrack.nutrition.dto` (6 types)
+- `com.vitatrack.profile` (2 types)
+- `com.vitatrack.profile.dto` (1 types)
+- `com.vitatrack.report` (2 types)
+- `com.vitatrack.report.dto` (4 types)
+- `com.vitatrack.security` (2 types)
+- `com.vitatrack.security.jwt` (2 types)
+- `com.vitatrack.user` (5 types)
+- `com.vitatrack.video` (5 types)
+- `com.vitatrack.video.dto` (1 types)
