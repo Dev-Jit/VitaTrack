@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -121,153 +122,237 @@ export default function FitnessPage() {
     }
   };
 
+  const yAxisMax = useMemo(() => {
+    const maxMin = Math.max(
+      0,
+      ...weeklyMinutes.map((d) => Number(d.minutes ?? 0))
+    );
+    const step = 40;
+    return Math.max(160, Math.ceil(maxMin / step) * step);
+  }, [weeklyMinutes]);
+
+  const yAxisTicks = useMemo(() => {
+    const step = 40;
+    const ticks = [];
+    for (let v = 0; v <= yAxisMax; v += step) ticks.push(v);
+    return ticks;
+  }, [yAxisMax]);
+
+  const inputClass =
+    "w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition-[box-shadow,border-color] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25";
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Fitness</h1>
-        <p className="mt-1 text-sm text-slate-600">Today: {todayString}</p>
-      </div>
-
-      {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      ) : null}
-
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border bg-white p-4 shadow-sm lg:col-span-2">
-          <div className="mb-3">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Weekly Exercise Minutes
-            </h2>
-            <p className="text-sm text-slate-500">Last 7 days</p>
+    <div className="-mx-4 -mt-4 bg-slate-50 px-6 py-8 pb-24 md:-mx-6 md:-mt-6 md:px-8 md:pb-8">
+      <div className="space-y-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              Fitness
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">Today: {todayString}</p>
           </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyMinutes}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="minutes" fill="#0f172a" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          {loading ? (
-            <p className="mt-2 text-sm text-slate-500">Loading chart…</p>
-          ) : null}
+          <Link
+            to="/nutrition"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
+          >
+            Add food
+          </Link>
         </div>
 
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Log exercise</h2>
-          <form className="mt-3 space-y-3" onSubmit={handleSubmit(onSubmit)}>
-            <label className="block text-sm">
-              <span className="mb-1 block text-slate-600">Exercise name</span>
-              <input
-                {...register("exerciseName", { required: true })}
-                className="w-full rounded border px-3 py-2"
-                placeholder="e.g. Running, Pushups"
-              />
-            </label>
+        {error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
 
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm">
-                <span className="mb-1 block text-slate-600">Category</span>
-                <select
-                  {...register("category", { required: true })}
-                  className="w-full rounded border px-3 py-2"
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+            <div className="mb-5">
+              <h2 className="text-lg font-bold text-slate-900">
+                Weekly Exercise Minutes
+              </h2>
+              <p className="mt-0.5 text-sm text-slate-500">Last 7 days</p>
+            </div>
+            <div className="h-72 w-full min-h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={weeklyMinutes}
+                  margin={{ top: 8, right: 8, left: 4, bottom: 4 }}
                 >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#e2e8f0"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fill: "#64748b", fontSize: 12 }}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={{ stroke: "#cbd5e1" }}
+                  />
+                  <YAxis
+                    domain={[0, yAxisMax]}
+                    ticks={yAxisTicks}
+                    tick={{ fill: "#64748b", fontSize: 12 }}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={{ stroke: "#cbd5e1" }}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "rgba(15, 23, 42, 0.04)" }}
+                    contentStyle={{
+                      borderRadius: "0.5rem",
+                      border: "1px solid #e2e8f0",
+                      boxShadow: "0 1px 2px rgb(0 0 0 / 0.05)",
+                    }}
+                  />
+                  <Bar
+                    dataKey="minutes"
+                    fill="#0f172a"
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={48}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {loading ? (
+              <p className="mt-3 text-sm text-slate-500">Loading chart…</p>
+            ) : null}
+          </div>
 
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">Log exercise</h2>
+            <form
+              className="mt-5 flex flex-col gap-4"
+              onSubmit={handleSubmit(onSubmit)}
+            >
               <label className="block text-sm">
-                <span className="mb-1 block text-slate-600">Duration (min)</span>
+                <span className="mb-1.5 block font-medium text-slate-700">
+                  Exercise name
+                </span>
                 <input
-                  {...register("durationMinutes", { required: true, min: 1 })}
-                  type="number"
-                  className="w-full rounded border px-3 py-2"
+                  {...register("exerciseName", { required: true })}
+                  className={inputClass}
+                  placeholder="e.g. Running, Pushups"
                 />
               </label>
-            </div>
 
-            <label className="block text-sm">
-              <span className="mb-1 block text-slate-600">Calories burned</span>
-              <input
-                {...register("caloriesBurned", { required: true, min: 0 })}
-                type="number"
-                className="w-full rounded border px-3 py-2"
-              />
-            </label>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1.5 block font-medium text-slate-700">
+                    Category
+                  </span>
+                  <select
+                    {...register("category", { required: true })}
+                    className={inputClass}
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="block text-sm">
-              <span className="mb-1 block text-slate-600">Notes</span>
-              <textarea
-                {...register("notes")}
-                rows={3}
-                className="w-full rounded border px-3 py-2"
-                placeholder="Optional notes"
-              />
-            </label>
+                <label className="block text-sm">
+                  <span className="mb-1.5 block font-medium text-slate-700">
+                    Duration (min)
+                  </span>
+                  <input
+                    {...register("durationMinutes", { required: true, min: 1 })}
+                    type="number"
+                    className={inputClass}
+                  />
+                </label>
+              </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              {isSubmitting ? "Saving…" : "Add"}
-            </button>
-          </form>
-        </div>
-      </section>
+              <label className="block text-sm">
+                <span className="mb-1.5 block font-medium text-slate-700">
+                  Calories burned
+                </span>
+                <input
+                  {...register("caloriesBurned", { required: true, min: 0 })}
+                  type="number"
+                  className={inputClass}
+                />
+              </label>
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-end justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+              <label className="block text-sm">
+                <span className="mb-1.5 block font-medium text-slate-700">
+                  Notes
+                </span>
+                <textarea
+                  {...register("notes")}
+                  rows={3}
+                  className={inputClass}
+                  placeholder="Optional notes"
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-1 w-full rounded-lg bg-slate-900 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-slate-800 disabled:opacity-60"
+              >
+                {isSubmitting ? "Saving…" : "Add"}
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-5">
+            <h2 className="text-lg font-bold text-slate-900">
               Today&apos;s exercises
             </h2>
-            <p className="text-sm text-slate-500">
-              {todayLogs.length} {todayLogs.length === 1 ? "entry" : "entries"}
+            <p className="mt-0.5 text-sm text-slate-500">
+              {todayLogs.length}{" "}
+              {todayLogs.length === 1 ? "entry" : "entries"}
             </p>
           </div>
-        </div>
 
-        {loading ? (
-          <p className="text-sm text-slate-500">Loading…</p>
-        ) : todayLogs.length === 0 ? (
-          <p className="text-sm text-slate-500">No exercises logged today.</p>
-        ) : (
-          <ul className="space-y-2">
-            {todayLogs.map((log) => (
-              <li
-                key={log.id}
-                className="flex items-center justify-between rounded-lg border px-3 py-2"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{log.exerciseName}</p>
-                  <p className="text-xs uppercase text-slate-500">
-                    {log.category}
-                    {log.notes ? ` • ${log.notes}` : ""}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-slate-800">
-                    {log.durationMinutes} min
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {log.caloriesBurned} kcal
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {loading ? (
+            <p className="text-sm text-slate-500">Loading…</p>
+          ) : todayLogs.length === 0 ? (
+            <p className="text-sm text-slate-500">No exercises logged today.</p>
+          ) : (
+            <ul className="space-y-3">
+              {todayLogs.map((log) => (
+                <li
+                  key={log.id}
+                  className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900">
+                      {log.exerciseName}
+                    </p>
+                    <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-500">
+                      <span className="uppercase tracking-wide">
+                        {log.category}
+                      </span>
+                      {log.notes ? (
+                        <span> • {log.notes}</span>
+                      ) : (
+                        <span className="uppercase tracking-wide">
+                          {" "}
+                          • Logged from exercise recommendations
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-left sm:text-right">
+                    <p className="text-base font-bold text-slate-900">
+                      {log.durationMinutes} min
+                    </p>
+                    <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {log.caloriesBurned} kcal
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

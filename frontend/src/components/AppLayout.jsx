@@ -37,8 +37,10 @@ const mobileNavItems = [
 
 function navClass({ isActive }) {
   return [
-    "rounded-md px-3 py-2 text-sm transition",
-    isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100",
+    "rounded-lg px-3 py-2.5 text-sm transition-colors",
+    isActive
+      ? "bg-emerald-500/15 text-emerald-300"
+      : "text-slate-300 hover:bg-slate-800 hover:text-white",
   ].join(" ");
 }
 
@@ -52,14 +54,17 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto flex min-h-screen max-w-7xl">
-        <aside className="hidden w-64 border-r bg-white p-4 md:flex md:flex-col">
-          <h1 className="mb-6 text-xl font-bold text-slate-900">VitaTrack</h1>
+    <div className="min-h-screen bg-slate-100">
+      <div className="flex min-h-screen w-full">
+        <aside className="hidden w-64 bg-slate-950 p-4 md:flex md:flex-col">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-white">VitaTrack</h1>
+            <p className="mt-1 text-xs text-slate-400">Clinical health tracking</p>
+          </div>
           <nav className="flex flex-1 flex-col gap-5">
             {desktopSections.map((section) => (
               <div key={section.title}>
-                <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {section.title}
                 </p>
                 <div className="flex flex-col gap-1">
@@ -75,7 +80,7 @@ export default function AppLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="mt-4 rounded-md border px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+            className="mt-4 rounded-lg border border-slate-700 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800"
           >
             Logout
           </button>

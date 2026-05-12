@@ -16,6 +16,12 @@ function parseEmailFromToken(token) {
   }
 }
 
+const fieldClass =
+  "w-full rounded-lg border border-slate-900 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition-[box-shadow,border-color] focus:ring-2 focus:ring-slate-900/15 disabled:bg-slate-100 disabled:text-slate-500";
+
+const fieldReadOnlyClass =
+  "w-full cursor-not-allowed rounded-lg border border-slate-900 bg-slate-100 px-3 py-2.5 text-sm text-slate-600 shadow-sm";
+
 export default function ProfilePage() {
   const token = useAuthStore((state) => state.token);
   const email = useMemo(() => parseEmailFromToken(token), [token]);
@@ -99,121 +105,164 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Manage your personal information.
-        </p>
-      </div>
-
-      {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
+    <div className="-mx-4 -mt-4 bg-slate-100/90 px-6 py-8 pb-24 md:-mx-6 md:-mt-6 md:px-8 md:pb-8">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Profile
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Manage your personal information.
+          </p>
         </div>
-      ) : null}
-      {success ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-          {success}
-        </div>
-      ) : null}
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Personal details</h2>
-        <form className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2" onSubmit={onSave}>
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-600">First name</span>
-            <input
-              type="text"
-              value={form.firstName}
-              onChange={onChange("firstName")}
-              disabled={loading || saving}
-              className="w-full rounded border px-3 py-2 disabled:bg-slate-50"
-            />
-          </label>
-
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-600">Last name</span>
-            <input
-              type="text"
-              value={form.lastName}
-              onChange={onChange("lastName")}
-              disabled={loading || saving}
-              className="w-full rounded border px-3 py-2 disabled:bg-slate-50"
-            />
-          </label>
-
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-600">Email</span>
-            <input
-              type="email"
-              value={email}
-              disabled
-              className="w-full rounded border bg-slate-50 px-3 py-2 text-slate-500"
-            />
-          </label>
-
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-600">Date of birth</span>
-            <input
-              type="date"
-              value={form.dateOfBirth}
-              onChange={onChange("dateOfBirth")}
-              disabled={loading || saving}
-              className="w-full rounded border px-3 py-2 disabled:bg-slate-50"
-            />
-          </label>
-
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-600">Gender</span>
-            <select
-              value={form.gender}
-              onChange={onChange("gender")}
-              disabled={loading || saving}
-              className="w-full rounded border px-3 py-2 disabled:bg-slate-50"
-            >
-              <option value="">Select</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-600">Height (cm)</span>
-            <input
-              type="number"
-              min={0}
-              value={form.heightCm}
-              onChange={onChange("heightCm")}
-              disabled={loading || saving}
-              className="w-full rounded border px-3 py-2 disabled:bg-slate-50"
-            />
-          </label>
-
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-600">Daily water goal (ml)</span>
-            <input
-              type="number"
-              min={0}
-              value={form.dailyWaterGoalMl}
-              onChange={onChange("dailyWaterGoalMl")}
-              disabled={loading || saving}
-              className="w-full rounded border px-3 py-2 disabled:bg-slate-50"
-            />
-          </label>
-
-          <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={loading || saving}
-              className="mt-1 rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            >
-              {saving ? "Saving..." : "Save changes"}
-            </button>
+        {error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
           </div>
-        </form>
-      </section>
+        ) : null}
+        {success ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+            {success}
+          </div>
+        ) : null}
+
+        <section className="rounded-xl border border-slate-900 bg-white p-6 shadow-sm md:p-8">
+          <h2 className="text-lg font-bold text-slate-900">Personal details</h2>
+
+          <form
+            className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5"
+            onSubmit={onSave}
+          >
+            <label className="text-sm">
+              <span className="mb-1.5 block font-medium text-slate-600">
+                First name
+              </span>
+              <input
+                type="text"
+                value={form.firstName}
+                onChange={onChange("firstName")}
+                disabled={loading || saving}
+                className={fieldClass}
+              />
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1.5 block font-medium text-slate-600">
+                Last name
+              </span>
+              <input
+                type="text"
+                value={form.lastName}
+                onChange={onChange("lastName")}
+                disabled={loading || saving}
+                className={fieldClass}
+              />
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1.5 block font-medium text-slate-600">
+                Email
+              </span>
+              <input
+                type="email"
+                value={email}
+                disabled
+                readOnly
+                className={fieldReadOnlyClass}
+              />
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1.5 block font-medium text-slate-600">
+                Date of birth
+              </span>
+              <input
+                type="date"
+                value={form.dateOfBirth}
+                onChange={onChange("dateOfBirth")}
+                disabled={loading || saving}
+                className={fieldClass}
+              />
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1.5 block font-medium text-slate-600">
+                Gender
+              </span>
+              <div className="relative">
+                <select
+                  value={form.gender}
+                  onChange={onChange("gender")}
+                  disabled={loading || saving}
+                  className={`${fieldClass} appearance-none pr-10`}
+                >
+                  <option value="">Select</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </select>
+                <span
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-700"
+                  aria-hidden
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1.5 block font-medium text-slate-600">
+                Height (cm)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={form.heightCm}
+                onChange={onChange("heightCm")}
+                disabled={loading || saving}
+                className={fieldClass}
+              />
+            </label>
+
+            <label className="text-sm sm:col-span-1 sm:max-w-md">
+              <span className="mb-1.5 block font-medium text-slate-600">
+                Daily water goal (ml)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={form.dailyWaterGoalMl}
+                onChange={onChange("dailyWaterGoalMl")}
+                disabled={loading || saving}
+                className={fieldClass}
+              />
+            </label>
+
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={loading || saving}
+                className="rounded-lg bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:opacity-60"
+              >
+                {saving ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
     </div>
   );
 }

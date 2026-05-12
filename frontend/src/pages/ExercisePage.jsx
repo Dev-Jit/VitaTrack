@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../api/axiosClient";
 
-const CATEGORY_PILLS = ["All", "Cardio", "Strength", "Flexibility", "Recovery"];
+const CATEGORY_FILTERS = ["All", "Cardio", "Strength", "Flexibility", "Recovery"];
 
 const DAILY_PLAN = [
   {
@@ -62,7 +62,7 @@ const DAILY_PLAN = [
 
 function difficultyBadgeClass(level) {
   if (level === "Easy") return "bg-emerald-100 text-emerald-700";
-  if (level === "Medium") return "bg-amber-100 text-amber-700";
+  if (level === "Medium") return "bg-orange-100 text-orange-700";
   return "bg-rose-100 text-rose-700";
 }
 
@@ -79,29 +79,35 @@ function ExerciseDetailModal({ exercise, onClose }) {
   if (!exercise) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg">
-        <div className="flex items-center justify-between border-b p-4">
-          <h3 className="text-lg font-semibold text-slate-900">{exercise.name}</h3>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <h3 className="text-lg font-bold text-slate-900">{exercise.name}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
           >
             Close
           </button>
         </div>
-        <div className="space-y-4 p-4">
-          <p className="text-sm text-slate-600">{exercise.description}</p>
+        <div className="space-y-4 p-5">
+          <p className="text-sm leading-relaxed text-slate-600">
+            {exercise.description}
+          </p>
           <div className="grid grid-cols-1 gap-2 text-sm text-slate-700 sm:grid-cols-3">
-            <p className="rounded-md bg-slate-50 px-3 py-2">{exercise.duration}</p>
-            <p className="rounded-md bg-slate-50 px-3 py-2">
+            <p className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 font-medium">
+              {exercise.duration}
+            </p>
+            <p className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 font-medium">
               {exercise.calories} kcal
             </p>
-            <p className="rounded-md bg-slate-50 px-3 py-2">{exercise.difficulty}</p>
+            <p className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 font-medium">
+              {exercise.difficulty}
+            </p>
           </div>
           {exercise.videoUrl ? (
-            <div className="overflow-hidden rounded-lg border">
+            <div className="overflow-hidden rounded-xl border border-slate-200">
               <iframe
                 className="h-64 w-full"
                 src={exercise.videoUrl}
@@ -111,7 +117,9 @@ function ExerciseDetailModal({ exercise, onClose }) {
               />
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No video available for this exercise.</p>
+            <p className="text-sm text-slate-500">
+              No video available for this exercise.
+            </p>
           )}
         </div>
       </div>
@@ -152,7 +160,7 @@ export default function ExercisePage() {
   }, [activeCategory]);
 
   const progress = completedIds.length;
-  const progressPercent = Math.round((progress / DAILY_PLAN.length) * 100);
+  const totalPlan = DAILY_PLAN.length;
 
   const markDone = async (id) => {
     if (completedIds.includes(id)) return;
@@ -169,121 +177,126 @@ export default function ExercisePage() {
   };
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-xl bg-slate-900 p-5 text-white shadow-sm">
-        <p className="text-sm text-slate-300">Daily target</p>
-        <h1 className="mt-1 text-2xl font-bold">Your goal: {goalType}</h1>
-      </section>
+    <div className="-mx-4 -mt-4 bg-slate-50 px-6 py-8 pb-24 md:-mx-6 md:-mt-6 md:px-8 md:pb-8">
+      <div className="space-y-6">
+        <section className="overflow-hidden rounded-2xl bg-slate-900 px-6 py-5 text-white shadow-md md:px-8 md:py-6">
+          <p className="text-sm font-medium text-slate-400">Daily target</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
+            Your goal: {goalType}
+          </h1>
+        </section>
 
-      {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      ) : null}
+        {error ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Daily plan</h2>
-          <p className="text-sm font-medium text-slate-700">
-            {progress}/{DAILY_PLAN.length}
-          </p>
-        </div>
-        <div className="mb-4 h-2 w-full rounded-full bg-slate-100">
-          <div
-            className="h-2 rounded-full bg-slate-900 transition-all"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
+        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-slate-900">Daily plan</h2>
+            <p className="text-sm font-medium text-slate-500">
+              {progress}/{totalPlan}
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {DAILY_PLAN.map((exercise) => {
-            const done = completedIds.includes(exercise.id);
-            return (
-              <article
-                key={exercise.id}
-                className="rounded-lg border p-3 transition hover:border-slate-300"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-slate-900">{exercise.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {exercise.duration} • {exercise.calories} kcal
-                    </p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {DAILY_PLAN.map((exercise) => {
+              const done = completedIds.includes(exercise.id);
+              return (
+                <article
+                  key={exercise.id}
+                  className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base font-semibold text-slate-900">
+                      {exercise.name}
+                    </h3>
+                    <span
+                      className={[
+                        "shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold",
+                        difficultyBadgeClass(exercise.difficulty),
+                      ].join(" ")}
+                    >
+                      {exercise.difficulty}
+                    </span>
                   </div>
-                  <span
-                    className={[
-                      "rounded-full px-2 py-1 text-xs font-semibold",
-                      difficultyBadgeClass(exercise.difficulty),
-                    ].join(" ")}
-                  >
-                    {exercise.difficulty}
-                  </span>
-                </div>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {exercise.duration} • {exercise.calories} kcal
+                  </p>
 
-                <div className="mt-3 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedExercise(exercise)}
-                    className="text-sm font-medium text-slate-700 hover:text-slate-900"
-                  >
-                    View details
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => markDone(exercise.id)}
-                    disabled={done || pendingId === exercise.id}
-                    className={[
-                      "rounded-md px-3 py-2 text-sm font-medium",
-                      done
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-900 text-white hover:bg-slate-800",
-                    ].join(" ")}
-                  >
-                    {done ? "Done ✓" : pendingId === exercise.id ? "Saving..." : "Mark done"}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedExercise(exercise)}
+                      className="text-sm font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
+                    >
+                      View details
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => markDone(exercise.id)}
+                      disabled={done || pendingId === exercise.id}
+                      className={[
+                        "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                        done
+                          ? "cursor-default border border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-70",
+                      ].join(" ")}
+                    >
+                      {done
+                        ? "Done ✓"
+                        : pendingId === exercise.id
+                          ? "Saving..."
+                          : "Mark done"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
-      <section className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {CATEGORY_PILLS.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setActiveCategory(category)}
-              className={[
-                "rounded-full px-4 py-1.5 text-sm transition",
-                activeCategory === category
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200",
-              ].join(" ")}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-2">
+            {CATEGORY_FILTERS.map((category) => {
+              const active = activeCategory === category;
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setActiveCategory(category)}
+                  className={[
+                    "py-1.5 text-sm font-medium transition-colors",
+                    active
+                      ? "rounded-full bg-slate-900 px-4 text-white"
+                      : "px-3 text-slate-600 hover:text-slate-900",
+                  ].join(" ")}
+                >
+                  {category}
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredExercises.map((exercise) => (
-            <button
-              key={exercise.id}
-              type="button"
-              onClick={() => setSelectedExercise(exercise)}
-              className="rounded-xl border bg-white p-4 text-left shadow-sm transition hover:border-slate-300"
-            >
-              <p className="font-semibold text-slate-900">{exercise.name}</p>
-              <p className="mt-1 text-sm text-slate-500">{exercise.category}</p>
-              <p className="mt-3 text-xs text-slate-600">
-                {exercise.duration} • {exercise.calories} kcal
-              </p>
-            </button>
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredExercises.map((exercise) => (
+              <button
+                key={exercise.id}
+                type="button"
+                onClick={() => setSelectedExercise(exercise)}
+                className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300"
+              >
+                <p className="font-semibold text-slate-900">{exercise.name}</p>
+                <p className="mt-1 text-sm text-slate-500">{exercise.category}</p>
+                <p className="mt-3 text-xs text-slate-500">
+                  {exercise.duration} • {exercise.calories} kcal
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
 
       <ExerciseDetailModal
         exercise={selectedExercise}
