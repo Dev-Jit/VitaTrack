@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import com.vitatrack.nutrition.MealType;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,5 +31,6 @@ public class FoodLogRequest {
     private Double quantity;
 
     @NotNull(message = "logDate is required")
+    @PastOrPresent(message = "logDate cannot be in the future")
     private LocalDate logDate;
 }

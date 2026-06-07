@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,5 +23,6 @@ public class WaterLogRequest {
     private Integer amountMl;
 
     @NotNull(message = "loggedAt is required")
+    @PastOrPresent(message = "loggedAt cannot be in the future")
     private LocalDateTime loggedAt;
 }

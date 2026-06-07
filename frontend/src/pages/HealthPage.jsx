@@ -12,13 +12,22 @@ import {
   YAxis,
 } from "recharts";
 import axiosClient from "../api/axiosClient";
+import {
+  formatDateTimeLocal,
+  formatLocalDate,
+  isFutureDateTimeLocal,
+  maxDateTimeNow,
+  parseApiDateTime,
+} from "../utils/dateUtils";
 
 const METRIC_OPTIONS = [
   { value: "WEIGHT", label: "Weight", unit: "kg" },
   { value: "HEART_RATE", label: "Heart Rate", unit: "bpm" },
   { value: "SLEEP_HOURS", label: "Sleep", unit: "hours" },
-  { value: "SYSTOLIC_BP", label: "Blood Pressure", unit: "mmHg" },
+  { value: "SYSTOLIC_BP", label: "Systolic BP", unit: "mmHg" },
+  { value: "DIASTOLIC_BP", label: "Diastolic BP", unit: "mmHg" },
   { value: "BLOOD_SUGAR", label: "Blood Sugar", unit: "mg/dL" },
+  { value: "BMI", label: "BMI", unit: "kg/m2" },
 ];
 
 const RANGE_OPTIONS = [
@@ -29,19 +38,6 @@ const RANGE_OPTIONS = [
 
 /** Display-only chart target for weight (kg), shown as legend + reference line */
 const WEIGHT_CHART_TARGET_KG = 75;
-
-function toDateString(date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function toDateTimeLocal(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hour = String(date.getHours()).padStart(2, "0");
-  const minute = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hour}:${minute}`;
-}
 
 export default function HealthPage() {
   const [selectedMetric, setSelectedMetric] = useState("WEIGHT");
@@ -62,7 +58,7 @@ export default function HealthPage() {
       metricType: "WEIGHT",
       value: "",
       unit: "kg",
-      recordedAt: toDateTimeLocal(new Date()),
+      recordedAt: formatDateTimeLocal(new Date()),
       notes: "",
     },
   });
@@ -81,8 +77,8 @@ export default function HealthPage() {
     const start = new Date();
     start.setDate(end.getDate() - (rangeDays - 1));
     return {
-      startDate: toDateString(start),
-      endDate: toDateString(end),
+      startDate: formatLocalDate(start),
+      endDate: formatLocalDate(end),
     };
   }, [rangeDays]);
 
@@ -114,7 +110,7 @@ export default function HealthPage() {
       [...metrics]
         .reverse()
         .map((item) => ({
-          recordedAt: new Date(item.recordedAt).toLocaleDateString("en-US", {
+          recordedAt: parseApiDateTime(item.recordedAt)?.toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
           }),
@@ -129,14 +125,32 @@ export default function HealthPage() {
 
   const lastThreeReadings = useMemo(() => {
     const sorted = [...metrics].sort(
-      (a, b) => new Date(b.recordedAt) - new Date(a.recordedAt)
+      (a, b) =>
+        (parseApiDateTime(b.recordedAt)?.getTime() ?? 0) -
+        (parseApiDateTime(a.recordedAt)?.getTime() ?? 0)
     );
     return sorted.slice(0, 3);
   }, [metrics]);
 
   const unitIsAutoFilled = METRIC_OPTIONS.some((o) => o.value === watchedType);
 
+  const fetchMetricsForType = async (metricType) => {
+    const response = await axiosClient.get("/health/metrics", {
+      params: {
+        type: metricType,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      },
+    });
+    setMetrics(response.data ?? []);
+  };
+
   const onSubmit = async (values) => {
+    if (isFutureDateTimeLocal(values.recordedAt)) {
+      setError("Recorded time cannot be in the future.");
+      return;
+    }
+
     setError("");
     try {
       await axiosClient.post("/health/metric", {
@@ -144,25 +158,20 @@ export default function HealthPage() {
         value: Number(values.value),
         unit: values.unit,
         recordedAt: values.recordedAt,
-        notes: values.notes,
+        notes: values.notes?.trim() ? values.notes : undefined,
       });
 
-      if (values.metricType === selectedMetric) {
-        const response = await axiosClient.get("/health/metrics", {
-          params: {
-            type: selectedMetric,
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate,
-          },
-        });
-        setMetrics(response.data ?? []);
+      if (values.metricType !== selectedMetric) {
+        setSelectedMetric(values.metricType);
+      } else {
+        await fetchMetricsForType(values.metricType);
       }
 
       reset({
         metricType: values.metricType,
         value: "",
         unit: values.unit,
-        recordedAt: toDateTimeLocal(new Date()),
+        recordedAt: formatDateTimeLocal(new Date()),
         notes: "",
       });
     } catch (err) {
@@ -177,7 +186,16 @@ export default function HealthPage() {
     ? `${fieldClass} cursor-not-allowed bg-emerald-50/80 text-emerald-900`
     : fieldClass;
 
-  const yAxisDomain = selectedMetric === "WEIGHT" ? [60, 80] : undefined;
+  const yAxisDomain = useMemo(() => {
+    if (selectedMetric !== "WEIGHT" || chartData.length === 0) {
+      return undefined;
+    }
+    const values = chartData.map((point) => point.value);
+    const min = Math.min(...values, WEIGHT_CHART_TARGET_KG);
+    const max = Math.max(...values, WEIGHT_CHART_TARGET_KG);
+    const padding = Math.max(2, (max - min) * 0.1);
+    return [Math.floor(min - padding), Math.ceil(max + padding)];
+  }, [chartData, selectedMetric]);
 
   return (
     <div className="-mx-4 -mt-4 bg-green-50 px-6 py-8 pb-24 md:-mx-6 md:-mt-6 md:px-8 md:pb-8">
@@ -191,66 +209,7 @@ export default function HealthPage() {
               Track your wellness metrics and monitor trends over time.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 lg:shrink-0">
-            <Link
-              to="/nutrition"
-              className="rounded-xl bg-emerald-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-950"
-            >
-              Add food
-            </Link>
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="relative rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-                />
-              </svg>
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
-            <Link
-              to="/profile"
-              aria-label="Settings"
-              className="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 shadow-sm transition-colors hover:bg-gray-50"
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </Link>
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-200 bg-emerald-100 text-sm font-semibold text-emerald-900 shadow-sm"
-              aria-hidden
-            >
-              VT
-            </div>
-          </div>
+          
         </div>
 
         {error ? (
@@ -408,8 +367,6 @@ export default function HealthPage() {
                       {option.label}
                     </option>
                   ))}
-                  <option value="DIASTOLIC_BP">Diastolic BP</option>
-                  <option value="BMI">BMI</option>
                 </select>
               </label>
 
@@ -444,8 +401,14 @@ export default function HealthPage() {
                   Recorded at
                 </span>
                 <input
-                  {...register("recordedAt", { required: true })}
+                  {...register("recordedAt", {
+                    required: true,
+                    validate: (value) =>
+                      !isFutureDateTimeLocal(value) ||
+                      "Recorded time cannot be in the future",
+                  })}
                   type="datetime-local"
+                  max={maxDateTimeNow()}
                   className={fieldClass}
                 />
               </label>
@@ -520,7 +483,7 @@ export default function HealthPage() {
                       className="flex items-center justify-between gap-3 py-3 first:pt-0"
                     >
                       <span className="text-sm text-gray-600">
-                        {new Date(row.recordedAt).toLocaleString("en-US", {
+                        {parseApiDateTime(row.recordedAt)?.toLocaleString("en-US", {
                           month: "short",
                           day: "numeric",
                           hour: "numeric",

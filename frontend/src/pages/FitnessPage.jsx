@@ -11,12 +11,9 @@ import {
   YAxis,
 } from "recharts";
 import axiosClient from "../api/axiosClient";
+import { formatLocalDate, todayLocal } from "../utils/dateUtils";
 
 const CATEGORIES = ["CARDIO", "STRENGTH", "FLEXIBILITY", "OTHER"];
-
-function yyyyMmDd(date) {
-  return date.toISOString().slice(0, 10);
-}
 
 function shortDay(date) {
   return date.toLocaleDateString("en-US", { weekday: "short" });
@@ -29,7 +26,7 @@ export default function FitnessPage() {
   const [weeklyMinutes, setWeeklyMinutes] = useState([]);
 
   const today = useMemo(() => new Date(), []);
-  const todayString = useMemo(() => yyyyMmDd(today), [today]);
+  const todayString = useMemo(() => todayLocal(), []);
 
   const weekRange = useMemo(() => {
     const end = new Date(today);
@@ -61,8 +58,8 @@ export default function FitnessPage() {
         axiosClient.get("/fitness/logs", { params: { date: todayString } }),
         axiosClient.get("/fitness/history", {
           params: {
-            startDate: yyyyMmDd(weekRange.start),
-            endDate: yyyyMmDd(weekRange.end),
+            startDate: formatLocalDate(weekRange.start),
+            endDate: formatLocalDate(weekRange.end),
           },
         }),
       ]);
@@ -76,7 +73,7 @@ export default function FitnessPage() {
       for (let i = 0; i < 7; i += 1) {
         const d = new Date(weekRange.start);
         d.setDate(d.getDate() + i);
-        dayBuckets.set(yyyyMmDd(d), { day: shortDay(d), minutes: 0 });
+        dayBuckets.set(formatLocalDate(d), { day: shortDay(d), minutes: 0 });
       }
       for (const log of history) {
         const key = log.logDate;
@@ -151,12 +148,7 @@ export default function FitnessPage() {
             </h1>
             <p className="mt-1 text-sm text-slate-500">Today: {todayString}</p>
           </div>
-          <Link
-            to="/nutrition"
-            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
-          >
-            Add food
-          </Link>
+          
         </div>
 
         {error ? (

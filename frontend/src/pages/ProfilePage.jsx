@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axiosClient from "../api/axiosClient";
+import { maxDateToday } from "../utils/dateUtils";
 import useAuthStore from "../store/authStore";
 
 function parseEmailFromToken(token) {
@@ -182,6 +183,7 @@ export default function ProfilePage() {
                 value={form.dateOfBirth}
                 onChange={onChange("dateOfBirth")}
                 disabled={loading || saving}
+                max={maxDateToday()}
                 className={fieldClass}
               />
             </label>

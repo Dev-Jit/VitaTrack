@@ -5,8 +5,10 @@ import java.time.LocalDate;
 import com.vitatrack.goal.GoalStatus;
 import com.vitatrack.goal.GoalType;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,9 +35,11 @@ public class GoalRequest {
     private String unit;
 
     @NotNull(message = "startDate is required")
+    @PastOrPresent(message = "startDate cannot be in the future")
     private LocalDate startDate;
 
     @NotNull(message = "targetDate is required")
+    @FutureOrPresent(message = "targetDate cannot be in the past")
     private LocalDate targetDate;
 
     @NotNull(message = "status is required")

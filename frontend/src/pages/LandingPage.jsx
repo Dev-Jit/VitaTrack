@@ -131,21 +131,6 @@ export default function LandingPage() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-8 lg:flex">
-            <button type="button" className={navLinkClass} onClick={() => scrollToId("features")}>
-              Features
-            </button>
-            <button type="button" className={navLinkClass} onClick={() => scrollToId("how-it-works")}>
-              How it Works
-            </button>
-            <button type="button" className={navLinkClass} onClick={() => scrollToId("pricing")}>
-              Pricing
-            </button>
-            <button type="button" className={navLinkClass} onClick={() => scrollToId("reviews")}>
-              Reviews
-            </button>
-          </nav>
-
           <div className="hidden items-center gap-3 sm:flex">
             <Link
               to="/login"
@@ -189,18 +174,6 @@ export default function LandingPage() {
         {mobileNavOpen ? (
           <div className="border-t border-slate-100 bg-white px-4 py-4 lg:hidden">
             <div className="flex flex-col gap-3">
-              <button type="button" className={`${navLinkClass} text-left`} onClick={() => { scrollToId("features"); setMobileNavOpen(false); }}>
-                Features
-              </button>
-              <button type="button" className={`${navLinkClass} text-left`} onClick={() => { scrollToId("how-it-works"); setMobileNavOpen(false); }}>
-                How it Works
-              </button>
-              <button type="button" className={`${navLinkClass} text-left`} onClick={() => { scrollToId("pricing"); setMobileNavOpen(false); }}>
-                Pricing
-              </button>
-              <button type="button" className={`${navLinkClass} text-left`} onClick={() => { scrollToId("reviews"); setMobileNavOpen(false); }}>
-                Reviews
-              </button>
               <Link
                 to="/register"
                 className="mt-2 rounded-lg bg-emerald-800 py-2.5 text-center text-sm font-semibold text-white"
@@ -239,38 +212,9 @@ export default function LandingPage() {
               See how it works
             </button>
           </div>
-          <div className="mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <div className="flex -space-x-2">
-              {["bg-emerald-200", "bg-sky-200", "bg-amber-200"].map((bg, i) => (
-                <div
-                  key={i}
-                  className={`h-10 w-10 rounded-full border-2 border-white ${bg} ring-1 ring-slate-100`}
-                  aria-hidden
-                />
-              ))}
-            </div>
-            <p className="text-sm text-slate-500">
-              Trusted by 10,000+ users · Free to start
-            </p>
-          </div>
         </section>
 
-        {/* Stats */}
-        <section className="bg-slate-900 py-12 text-white md:py-16">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 md:grid-cols-4 md:gap-6 md:px-6">
-            {[
-              { n: "10,000+", l: "Users" },
-              { n: "500K+", l: "Meals logged" },
-              { n: "200K+", l: "Workouts" },
-              { n: "98%", l: "User satisfaction" },
-            ].map((s) => (
-              <div key={s.l} className="text-center">
-                <p className="text-3xl font-bold tabular-nums md:text-4xl">{s.n}</p>
-                <p className="mt-2 text-sm text-slate-400 md:text-base">{s.l}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        
 
         {/* Features */}
         <section id="features" className="scroll-mt-24 bg-emerald-50/80 py-16 md:py-24">
@@ -335,77 +279,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section id="pricing" className="scroll-mt-24 border-y border-slate-100 bg-slate-50/50 py-16 md:py-20">
-          <div className="mx-auto max-w-3xl px-4 text-center md:px-6">
-            <h2 className="text-2xl font-bold text-slate-900 md:text-3xl">Simple pricing</h2>
-            <p className="mt-3 text-slate-600">Start free. Upgrade when you need more.</p>
-            <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-emerald-800">Free</p>
-              <p className="mt-2 text-4xl font-bold text-slate-900">$0</p>
-              <p className="mt-2 text-sm text-slate-600">Core tracking for individuals</p>
-              <ul className="mt-6 space-y-2 text-left text-sm text-slate-600">
-                <li className="flex gap-2">
-                  <span className="text-emerald-600">✓</span> Nutrition & water logs
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-600">✓</span> Fitness & health metrics
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-600">✓</span> Goals & reports
-                </li>
-              </ul>
-              <Link
-                to="/register"
-                className="mt-8 inline-flex w-full justify-center rounded-lg bg-emerald-800 py-3 text-sm font-semibold text-white transition hover:bg-emerald-900"
-              >
-                Get started free
-              </Link>
-            </div>
-          </div>
-        </section>
+        
 
-        {/* Reviews */}
-        <section id="reviews" className="scroll-mt-24 bg-white py-16 md:py-20">
-          <div className="mx-auto max-w-6xl px-4 md:px-6">
-            <h2 className="text-center text-2xl font-bold text-slate-900 md:text-3xl">
-              Loved by people building better habits
-            </h2>
-            <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-              {[
-                { q: "Finally one place for food, water, and workouts.", a: "Priya S." },
-                { q: "Charts make it easy to show my doctor my progress.", a: "James L." },
-                { q: "Goals keep me accountable without feeling overwhelming.", a: "Maria G." },
-              ].map((t) => (
-                <blockquote
-                  key={t.a}
-                  className="rounded-2xl border border-slate-100 bg-slate-50/80 p-6 text-left shadow-sm"
-                >
-                  <p className="text-sm font-medium text-slate-800">“{t.q}”</p>
-                  <footer className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t.a}
-                  </footer>
-                </blockquote>
-              ))}
-            </div>
-          </div>
-        </section>
+        
 
-        {/* Final CTA */}
-        <section className="px-4 py-16 md:px-6 md:py-20">
-          <div className="mx-auto max-w-3xl rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white px-6 py-12 text-center shadow-sm md:px-12 md:py-16">
-            <h2 className="text-2xl font-bold text-slate-900 md:text-3xl">
-              Start your health journey today
-            </h2>
-            <p className="mt-3 text-slate-600">Free forever. No credit card required.</p>
-            <Link
-              to="/register"
-              className="mt-8 inline-flex rounded-lg bg-emerald-800 px-10 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-900"
-            >
-              Sign up free
-            </Link>
-          </div>
-        </section>
+        
       </main>
 
       {/* Footer */}
@@ -465,16 +343,6 @@ export default function LandingPage() {
                     Sign up
                   </Link>
                 </li>
-                <li>
-                  <a href="#" className="transition hover:text-white">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="transition hover:text-white">
-                    Terms of Service
-                  </a>
-                </li>
               </ul>
             </div>
           </div>
@@ -482,22 +350,6 @@ export default function LandingPage() {
             <p className="text-xs text-slate-500">
               © {new Date().getFullYear()} VitaTrack. All rights reserved.
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="text-slate-500 transition hover:text-white" aria-label="Twitter">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-              <a href="#" className="text-slate-500 transition hover:text-white" aria-label="GitHub">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path
-                    fillRule="evenodd"
-                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </a>
-            </div>
           </div>
         </div>
       </footer>

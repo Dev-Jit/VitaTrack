@@ -12,13 +12,16 @@ import {
   YAxis,
 } from "recharts";
 import axiosClient from "../api/axiosClient";
+import {
+  addDaysLocal,
+  formatLocalDate,
+  parseApiDateTime,
+  parseLocalDate,
+  todayLocal,
+} from "../utils/dateUtils";
 
 const TABS = ["Daily", "Weekly", "Monthly"];
 const DEFAULT_CALORIE_GOAL = 2000;
-
-function yyyyMmDd(date) {
-  return date.toISOString().slice(0, 10);
-}
 
 function shortDay(date) {
   return date.toLocaleDateString("en-US", { weekday: "short" });
@@ -86,15 +89,13 @@ export default function ReportsPage() {
   const [tab, setTab] = useState("Daily");
   const [error, setError] = useState("");
 
-  const [dailyDate, setDailyDate] = useState(yyyyMmDd(new Date()));
+  const [dailyDate, setDailyDate] = useState(todayLocal());
   const [daily, setDaily] = useState(null);
   const [dailyLoading, setDailyLoading] = useState(false);
 
-  const [weeklyStart, setWeeklyStart] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 6);
-    return yyyyMmDd(d);
-  });
+  const [weeklyStart, setWeeklyStart] = useState(() =>
+    formatLocalDate(addDaysLocal(new Date(), -6))
+  );
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyBars, setWeeklyBars] = useState([]);
 
@@ -127,15 +128,11 @@ export default function ReportsPage() {
       setWeeklyLoading(true);
       setError("");
       try {
-        const start = new Date(weeklyStart);
-        const dates = [...Array(7)].map((_, idx) => {
-          const d = new Date(start);
-          d.setDate(d.getDate() + idx);
-          return d;
-        });
+        const start = parseLocalDate(weeklyStart);
+        const dates = [...Array(7)].map((_, idx) => addDaysLocal(start, idx));
         const responses = await Promise.all(
           dates.map((d) =>
-            axiosClient.get("/reports/daily", { params: { date: yyyyMmDd(d) } })
+            axiosClient.get("/reports/daily", { params: { date: formatLocalDate(d) } })
           )
         );
         setWeeklyBars(
@@ -228,145 +225,7 @@ export default function ReportsPage() {
               Daily, weekly, and monthly insights.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 lg:shrink-0">
-            {tab === "Daily" ? (
-              <label className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
-                <svg
-                  className="h-5 w-5 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  aria-hidden
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25m-18 0v7.5"
-                  />
-                </svg>
-                <input
-                  type="date"
-                  value={dailyDate}
-                  onChange={(e) => setDailyDate(e.target.value)}
-                  className="border-0 bg-transparent p-0 text-sm font-medium text-gray-900 outline-none"
-                />
-                <span className="hidden text-xs text-gray-400 sm:inline">
-                  {formatReportDate(dailyDate)}
-                </span>
-              </label>
-            ) : null}
-            {tab === "Weekly" ? (
-              <label className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
-                <svg
-                  className="h-5 w-5 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  aria-hidden
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25m-18 0v7.5"
-                  />
-                </svg>
-                <input
-                  type="date"
-                  value={weeklyStart}
-                  onChange={(e) => setWeeklyStart(e.target.value)}
-                  className="border-0 bg-transparent p-0 text-sm font-medium text-gray-900 outline-none"
-                />
-              </label>
-            ) : null}
-            {tab === "Monthly" ? (
-              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
-                <label className="flex items-center gap-1 text-sm text-gray-600">
-                  Month
-                  <input
-                    type="number"
-                    min={1}
-                    max={12}
-                    value={month}
-                    onChange={(e) =>
-                      setMonthYear((prev) => ({
-                        ...prev,
-                        month: Number(e.target.value),
-                      }))
-                    }
-                    className="w-14 rounded-lg border border-gray-200 px-2 py-1 text-center text-gray-900"
-                  />
-                </label>
-                <label className="flex items-center gap-1 text-sm text-gray-600">
-                  Year
-                  <input
-                    type="number"
-                    value={year}
-                    onChange={(e) =>
-                      setMonthYear((prev) => ({
-                        ...prev,
-                        year: Number(e.target.value),
-                      }))
-                    }
-                    className="w-20 rounded-lg border border-gray-200 px-2 py-1 text-center text-gray-900"
-                  />
-                </label>
-              </div>
-            ) : null}
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="relative rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 shadow-sm hover:bg-white/90"
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-                />
-              </svg>
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
-            <Link
-              to="/profile"
-              aria-label="Settings"
-              className="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 shadow-sm hover:bg-white/90"
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </Link>
-            <Link
-              to="/nutrition"
-              className="rounded-xl bg-emerald-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-950"
-            >
-              Add food
-            </Link>
-          </div>
+          
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -505,7 +364,7 @@ export default function ReportsPage() {
                                 {toMetricLabel(m.metricType)}
                               </p>
                               <p className="mt-0.5 text-xs text-gray-500">
-                                {new Date(m.recordedAt).toLocaleString()}
+                                {parseApiDateTime(m.recordedAt)?.toLocaleString()}
                                 {m.notes ? ` · ${m.notes}` : ""}
                               </p>
                             </div>
@@ -675,51 +534,10 @@ export default function ReportsPage() {
               weekly charts to spot patterns and adjust before they become
               habits.
             </p>
-            <button
-              type="button"
-              onClick={() => setTab("Weekly")}
-              className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-emerald-800 hover:text-emerald-950"
-            >
-              View detailed insights
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                />
-              </svg>
-            </button>
+            
           </div>
 
-          <div className="flex flex-col items-center justify-center rounded-xl bg-emerald-900 px-8 py-10 text-center shadow-md">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white ring-2 ring-white/20">
-              <svg
-                className="h-8 w-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52a6.003 6.003 0 00-4.918 4.183 6.003 6.003 0 007.432 7.03 6.003 6.003 0 002.25-.566m0 0a6.003 6.003 0 002.25.566m0 0v.75m0-3.75v3.75"
-                />
-              </svg>
-            </span>
-            <h3 className="mt-5 text-xl font-bold text-white">Elite tracker</h3>
-            <p className="mt-2 max-w-xs text-sm leading-relaxed text-emerald-100">
-              You are in the top 5% of active users this month.
-            </p>
-          </div>
+          
         </div>
       </div>
     </div>

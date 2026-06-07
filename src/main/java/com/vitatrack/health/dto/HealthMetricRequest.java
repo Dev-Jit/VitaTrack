@@ -6,6 +6,7 @@ import com.vitatrack.health.MetricType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,6 +30,7 @@ public class HealthMetricRequest {
     private String unit;
 
     @NotNull(message = "recordedAt is required")
+    @PastOrPresent(message = "recordedAt cannot be in the future")
     private LocalDateTime recordedAt;
 
     private String notes;

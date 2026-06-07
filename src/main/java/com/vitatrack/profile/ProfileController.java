@@ -1,5 +1,6 @@
 package com.vitatrack.profile;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,7 +25,7 @@ public class ProfileController {
     }
 
     @PutMapping
-    public ResponseEntity<ProfileDTO> updateProfile(@RequestBody ProfileDTO request) {
+    public ResponseEntity<ProfileDTO> updateProfile(@Valid @RequestBody ProfileDTO request) {
         return ResponseEntity.ok(profileService.upsertProfile(request));
     }
 }

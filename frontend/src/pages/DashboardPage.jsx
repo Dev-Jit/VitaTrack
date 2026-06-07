@@ -9,10 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import axiosClient from "../api/axiosClient";
-
-function formatDate(date) {
-  return date.toISOString().slice(0, 10);
-}
+import { formatLocalDate } from "../utils/dateUtils";
 
 function shortDay(date) {
   return date.toLocaleDateString("en-US", { weekday: "short" });
@@ -27,7 +24,7 @@ export default function DashboardPage() {
   const [weeklyTrend, setWeeklyTrend] = useState([]);
 
   const today = useMemo(() => new Date(), []);
-  const todayString = useMemo(() => formatDate(today), [today]);
+  const todayString = useMemo(() => formatLocalDate(today), [today]);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -47,7 +44,7 @@ export default function DashboardPage() {
             axiosClient.get(`/nutrition/logs?date=${todayString}`),
             axiosClient.get(`/fitness/logs?date=${todayString}`),
             ...weekDates.map((d) =>
-              axiosClient.get(`/reports/daily?date=${formatDate(d)}`)
+              axiosClient.get(`/reports/daily?date=${formatLocalDate(d)}`)
             ),
           ]);
 
@@ -231,20 +228,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="rounded-xl bg-sky-50 px-3 py-3 text-sm font-semibold text-sky-700"
-            >
-              + 250ml
-            </button>
-            <button
-              type="button"
-              className="rounded-xl bg-sky-50 px-3 py-3 text-sm font-semibold text-sky-700"
-            >
-              + 500ml
-            </button>
-          </div>
+          
         </div>
       </section>
     </div>

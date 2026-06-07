@@ -7,6 +7,7 @@ import com.vitatrack.fitness.ExerciseCategory;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,5 +38,6 @@ public class ExerciseLogRequest {
     private String notes;
 
     @NotNull(message = "logDate is required")
+    @PastOrPresent(message = "logDate cannot be in the future")
     private LocalDate logDate;
 }
